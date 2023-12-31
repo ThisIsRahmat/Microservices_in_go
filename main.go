@@ -15,6 +15,8 @@ func main() {
 	// hh := handlers.NewHello(l)
 
 	gh := handlers.NewGoodbye(l)
+
+	//create the handlers
 	ph := handlers.NewProducts(l)
 
 	//http.HandleFunc - covnerts function into a handler type
@@ -34,7 +36,7 @@ func main() {
 
 	// starts the http server, defaultsevrermux
 	//takes two parameters first is binding address then secodn is the http handler
-	//if you don;t sepcfiy the handler ti uses the default serveMux
+	//if you don;t sepcfiy the handler it uses the default serveMux
 	// http.ListenAndServe(":9090", sm)
 
 	//manually create a HTTP server and then feed that into

@@ -19,6 +19,7 @@ func NewProducts(l *log.Logger) *Products {
 
 // ServeHTTP is the main entry point for the handler and staisfies the http.Handler
 // interface
+// so within it you handle different requests and return different responsewriter
 func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// handle the request for a list of products
 	if r.Method == http.MethodGet {
@@ -26,13 +27,13 @@ func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == http.MethodPost {
-		p.addProducts(rw, r)
-		return
-	}
+	// if r.Method == http.MethodPost {
+	// 	p.addProducts(rw, r)
+	// 	return
+	// }
 
 	// catch all
-	// if no method is satisfied return an error
+	// if the GET method is satisfied return an error
 	rw.WriteHeader(http.StatusMethodNotAllowed)
 }
 
@@ -52,21 +53,21 @@ func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (p *Products) addProducts(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle POST Products")
+// func (p *Products) addProducts(rw http.ResponseWriter, r *http.Request) {
+// 	p.l.Println("Handle POST Products")
 
-	//create new product object
+// 	//create new product object
 
-	// why do we need & and .
+// 	// why do we need & and .
 
-	prod := &data.Product{}
+// 	prod := &data.Product{}
 
-	err := prod.FromJSON(r.Body)
+// 	err := prod.ToJSON(r.Body)
 
-	if err != nil {
-		http.Error(rw, "Unable to unmarshal JSON", http.StatusInternalServerError)
-	}
+// 	if err != nil {
+// 		http.Error(rw, "Unable to unmarshal JSON", http.StatusInternalServerError)
+// 	}
 
-	p.l.Printf("Prod: %#v", prod)
+// 	p.l.Printf("Prod: %#v", prod)
 
-}
+// }

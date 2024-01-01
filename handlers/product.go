@@ -3,6 +3,8 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"regexp"
+	"strconv"
 
 	"github.com/thisisrahmat/microservices_in_go/product-api/data"
 )
@@ -19,7 +21,6 @@ func NewProducts(l *log.Logger) *Products {
 
 // ServeHTTP is the main entry point for the handler and staisfies the http.Handler
 // interface
-// so within it you handle different requests and return different responsewriter
 func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// handle the request for a list of products
 	if r.Method == http.MethodGet {
@@ -27,13 +28,43 @@ func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// if r.Method == http.MethodPost {
-	// 	p.addProducts(rw, r)
-	// 	return
-	// }
+	if r.Method == http.MethodPost {
+		p.addProduct(rw, r)
+		return
+	}
+
+	if r.Method == http.MethodPut {
+		p.l.Println("PUT", r.URL.Path)
+		// expect the id in the URI
+		reg := regexp.MustCompile(`/([0-9]+)`)
+		g := reg.FindAllStringSubmatch(r.URL.Path, -1)
+
+		if len(g) != 1 {
+			p.l.Println("Invalid URI more than one id")
+			http.Error(rw, "Invalid URI", http.StatusBadRequest)
+			return
+		}
+
+		if len(g[0]) != 2 {
+			p.l.Println("Invalid URI more than one capture group")
+			http.Error(rw, "Invalid URI", http.StatusBadRequest)
+			return
+		}
+
+		idString := g[0][1]
+		id, err := strconv.Atoi(idString)
+		if err != nil {
+			p.l.Println("Invalid URI unable to convert to numer", idString)
+			http.Error(rw, "Invalid URI", http.StatusBadRequest)
+			return
+		}
+
+		p.updateProducts(id, rw, r)
+		return
+	}
 
 	// catch all
-	// if the GET method is satisfied return an error
+	// if no method is satisfied return an error
 	rw.WriteHeader(http.StatusMethodNotAllowed)
 }
 
@@ -41,8 +72,6 @@ func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	p.l.Println("Handle GET Products")
 
-	//get list of products from abstracted GetProducts method
-	//lp stands for list of products
 	// fetch the products from the datastore
 	lp := data.GetProducts()
 
@@ -53,21 +82,37 @@ func (p *Products) getProducts(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func (p *Products) addProducts(rw http.ResponseWriter, r *http.Request) {
-// 	p.l.Println("Handle POST Products")
+func (p *Products) addProduct(rw http.ResponseWriter, r *http.Request) {
+	p.l.Println("Handle POST Product")
 
-// 	//create new product object
+	prod := &data.Product{}
 
-// 	// why do we need & and .
+	err := prod.FromJSON(r.Body)
+	if err != nil {
+		http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+	}
 
-// 	prod := &data.Product{}
+	data.AddProduct(prod)
+}
 
-// 	err := prod.ToJSON(r.Body)
+func (p Products) updateProducts(id int, rw http.ResponseWriter, r *http.Request) {
+	p.l.Println("Handle PUT Product")
 
-// 	if err != nil {
-// 		http.Error(rw, "Unable to unmarshal JSON", http.StatusInternalServerError)
-// 	}
+	prod := &data.Product{}
 
-// 	p.l.Printf("Prod: %#v", prod)
+	err := prod.FromJSON(r.Body)
+	if err != nil {
+		http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+	}
 
-// }
+	err = data.UpdateProduct(id, prod)
+	if err == data.ErrProductNotFound {
+		http.Error(rw, "Product not found", http.StatusNotFound)
+		return
+	}
+
+	if err != nil {
+		http.Error(rw, "Product not found", http.StatusInternalServerError)
+		return
+	}
+}

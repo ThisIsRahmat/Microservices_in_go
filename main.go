@@ -12,9 +12,6 @@ import (
 
 func main() {
 	l := log.New(os.Stdout, "product-api", log.LstdFlags)
-	// hh := handlers.NewHello(l)
-
-	gh := handlers.NewGoodbye(l)
 
 	//create the handlers
 	ph := handlers.NewProducts(l)
@@ -32,7 +29,6 @@ func main() {
 
 	sm := http.NewServeMux()
 	sm.Handle("/", ph)
-	sm.Handle("/goodbye", gh)
 
 	// starts the http server, defaultsevrermux
 	//takes two parameters first is binding address then secodn is the http handler
